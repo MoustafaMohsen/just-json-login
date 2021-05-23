@@ -22,24 +22,24 @@ function json_basic_auth_handler( $user ) {
 	if ( isset( $_SERVER['PHP_AUTH_USER'] ) ) {
         $username = $_SERVER['PHP_AUTH_USER'];
         $password = $_SERVER['PHP_AUTH_PW'];
+	}else{
+		$http = 'A_Authorization';
+		$http = strtoupper($http);
+		$header = $_SERVER['HTTP_'.$http] ?? $_SERVER[$http] ?? NULL;
+		preg_match('/Basic (.+)/', $header, $matchArr);
+		$decoded = base64_decode($matchArr[1]);
+		preg_match('/(.*):(.*)/', $decoded, $autArr);
+		$username = $autArr[1];
+		$password = $autArr[2];
+	
+	
+		if(is_null($header)){
+			
+			return null;
+		}
+	
 	}
-
-    $http = 'A_Authorization';
-    $http = strtoupper($http);
-    $header = $_SERVER['HTTP_'.$http] ?? $_SERVER[$http] ?? NULL;
-    preg_match('/Basic (.+)/', $header, $matchArr);
-    $decoded = base64_decode($matchArr[1]);
-    preg_match('/(.*):(.*)/', $decoded, $autArr);
-    $username = $autArr[1];
-    $password = $autArr[2];
-
-
-    if(is_null($header)){
-        
-        return null;
-    }
-
-    remove_filter( 'determine_current_user', 'json_basic_auth_handler', 20 );
+	remove_filter( 'determine_current_user', 'json_basic_auth_handler', 20 );
 
 	$user = wp_authenticate( $username, $password );
 
@@ -51,8 +51,9 @@ function json_basic_auth_handler( $user ) {
 	}
 
 	$wp_json_basic_auth_error = true;
-
 	return $user->ID;
+
+
 }
 add_filter( 'determine_current_user', 'json_basic_auth_handler', 20 );
 
